@@ -54,31 +54,30 @@ bm2_close = pd.DataFrame({ bm2_ticker :  bmark2.history(period="2y")['Close']})
 
 # %% TODAY
 sdate = '2020-10-28'
-
 sdate = '2020-09-03' # DELETE THIS
 
+ctrans = 100.3/100
 # %% TODAY 
 
 usd_eur = yf.Ticker("EUR=X")
-USD_EUR_RATE = usd_eur.history(period="2y")["Close"].loc[sdate] * 100.3/100
+USD_EUR_RATE = usd_eur.history(period="2y")["Close"].loc[sdate] * ctrans
 
-start_ptf = 5000000/ USD_EUR_RATE #+ costo di transazione
+start_ptf = 5000000/ USD_EUR_RATE 
 
 
 # %% Create my portfolio
 
 weights = np.ones(N)/N # TRIVIAL WEIGHTS
 
-
 ptf = pd.DataFrame( columns = ["ticker", "weights", "shares"])
 ptf["ticker"] = tickers
 ptf["weights"] = weights
 ptf["close."+sdate] =close_data.loc[sdate].reset_index(drop=True)
-ptf["shares"] = start_ptf * weights / ptf["close."+sdate]
+ptf["shares"] = start_ptf * weights / (ptf["close."+sdate]*ctrans)
 ptf
 
-bm_shares = start_ptf/bm_close.loc[sdate].reset_index(drop=True)
-bm2_shares = start_ptf/bm2_close.loc[sdate].reset_index(drop=True)
+bm_shares = start_ptf/(bm_close.loc[sdate].reset_index(drop=True)*ctrans)
+bm2_shares = start_ptf/(bm2_close.loc[sdate].reset_index(drop=True)*ctrans)
 
 
 # %% Calculate the historical price
