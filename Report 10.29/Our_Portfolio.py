@@ -1,5 +1,4 @@
 # %%  INSTAL PACKAGES
-
 import yfinance as yf
 import seaborn as sns
 import numpy as np
@@ -69,7 +68,8 @@ extraLiquidity = 0.1/100 # Extra liquidity which should not be invested
 usd_eur = yf.Ticker("EUR=X")
 USD_EUR_RATE = usd_eur.history(period="2y")["Close"].loc[sdate] * ctrans
 cash = 5e6
-start_ptf = cash*(1-extraLiquidity)/ USD_EUR_RATE 
+cash_USD = cash/ USD_EUR_RATE
+start_ptf = cash*(1-extraLiquidity)/ USD_EUR_RATE
 
 # %% PORTFOLIO OPTIMIZATION (SHARPE RATIO)
 #Expected return
@@ -81,7 +81,6 @@ Sigma = risk_models.sample_cov(close_data)
 ef = EfficientFrontier(mu, Sigma, weight_bounds=(0.01,1)) #weight bounds in negative allows shorting of stocks
 sharpe_pfolio=ef.max_sharpe() #May use add objective to ensure minimum zero weighting to individual stocks
 sharpe_pwt=ef.clean_weights()
-print(sharpe_pwt)
 
 #Print Portfolio Performances
 ef.portfolio_performance(verbose=True)
@@ -90,7 +89,6 @@ ef.portfolio_performance(verbose=True)
 latest_prices = get_latest_prices(close_data)
 da = DiscreteAllocation(sharpe_pwt, latest_prices*ctrans, total_portfolio_value=start_ptf)
 allocation, leftover = da.lp_portfolio()
-print(allocation)
 
 # %% PORTFOLIO OPTIMIZATION (INFORMATION RATIO)
 #Assets return:
@@ -150,4 +148,41 @@ all_hist.plot()
 
 # %% SAVE DATA IN CVS
 close_data.to_csv('closed_hist.csv')
+
+# %% ####################################################################################
+#### 1ST PERIODICAL VALUATION ###########################################################
+#########################################################################################
+# %% CHOSEN PORTFOLIO AND BENCHMARK
+# Portfolio
+ptf = pd.DataFrame()
+ptf["ticker"] = tickers
+ptf["close."+sdate] =close_data.loc[sdate].reset_index(drop=True)
+ptf["shares"] = np.array([12924, 3045, 2263, 10246, 22703, 8010, 3020, 2658])
+ptf["weights"] = np.multiply(ptf["shares"].values,ptf["close."+sdate].values)/cash_USD
+print(ptf)
+liquidity_USD = cash_USD-np.dot(ptf["shares"].values,ptf["close."+sdate].values)*ctrans
+ptf_liquidity = pd.DataFrame([["liquidity", liquidity_USD, liquidity_USD/cash_USD]], columns=["ticker", "amount (USD)", "weight"])
+print(ptf_liquidity)
+
+# %% PORTFOLIO AND BENCHMARK HISTORICAL PRICES FROM 2020-10-28
+# Portfolio
+ptf_hist = pd.DataFrame({"Ptf" : np.dot(close_data.loc["2020-10-28":],ptf["shares"])}, index = close_data.loc["2020-10-28":].index)
+ptf_hist += liquidity_USD
+
+# Benchmark
+bm_hist =  pd.DataFrame({bm_ticker : np.dot(bm_close.loc["2020-10-28":],bm_shares)}, index = bm_close.loc["2020-10-28":].index)
+
+# %% PORTFOLIO AND BENCHMARK HISTORICAL PRICES FROM 2 YEARS AGO
+# Portfolio
+ptf_hist = pd.DataFrame({"Ptf" : np.dot(close_data,ptf["shares"])}, index = close_data.index)
+ptf_hist += liquidity_USD
+
+# Benchmark
+bm_hist =  pd.DataFrame({bm_ticker : np.dot(bm_close,bm_shares)}, index = bm_close.index)
+
+# %% PLOT HISTORICAL PRICES
+all_hist = pd.merge(ptf_hist,bm_hist, left_index = True, right_index = True)
+
+all_hist.plot()
+
 # %%
