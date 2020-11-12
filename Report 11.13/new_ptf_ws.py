@@ -89,31 +89,24 @@ mu = expected_returns.mean_historical_return(adj_return, returns_data=True)
 Sigma = risk_models.sample_cov(adj_return, returns_data=True)
 
 # %% PTF OPT
-#Max Sharpe Ratio - Tangent to the Efficient Frontier
-ef = EfficientFrontier(mu, Sigma, weight_bounds=(0.03,1)) #weight bounds in negative allows shorting of stocks
-# ef.add_objective(objective_functions.L2_reg, gamma=.5)
 
-sharpe_pfolio=ef.max_sharpe() #May use add objective to ensure minimum zero weighting to individual stocks
-sharpe_pwt=ef.clean_weights()
+from pypfopt import CLA, plotting
+
+cla = CLA(mu, Sigma, weight_bounds=(0.03,1))
+cla.max_sharpe()
+cla.portfolio_performance(verbose=True)
+
+ax = plotting.plot_efficient_frontier(cla, showfig=True, show_assets=True)
+
+sharpe_pwt=cla.clean_weights()
 sharpe_pwt
-# print(np.array(list(sharpe_pwt.values())).sum()) #Check that weights sum to one
 
 # %% 
 #Print Portfolio Performances
-ef.portfolio_performance(verbose=True)
+cla.portfolio_performance(verbose=True)
 
 #Post-processing weights
 #latest_prices = get_latest_prices(close_data) #latest closing price
 latest_prices = close_data.loc[sdate] #2020-10-28 closing price
 da = DiscreteAllocation(sharpe_pwt, latest_prices*ctrans, total_portfolio_value=start_ptf)
 allocation, leftover = da.lp_portfolio()
-
-# %% NEW
-from pypfopt import CLA, plotting
-
-cla = CLA(mu, Sigma)
-cla.max_sharpe()
-cla.portfolio_performance(verbose=True)
-
-ax = plotting.plot_efficient_frontier(cla, showfig=True, show_assets=True)
-# %%

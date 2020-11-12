@@ -166,11 +166,24 @@ print(ptf_liquidity)
 
 # %% PORTFOLIO AND BENCHMARK HISTORICAL PRICES FROM 2020-10-28
 # Portfolio
-ptf_hist = pd.DataFrame({"Ptf" : np.dot(close_data.loc["2020-10-28":],ptf["shares"])}, index = close_data.loc["2020-10-28":].index)
+
+r1date = "2020-11-11"
+ptf_hist = pd.DataFrame({"Ptf" : np.dot(close_data.loc["2020-10-28":r1date],ptf["shares"])}, 
+                                index = close_data.loc["2020-10-28":r1date].index)
 ptf_hist += liquidity_USD
 
 # Benchmark
-bm_hist =  pd.DataFrame({bm_ticker : np.dot(bm_close.loc["2020-10-28":],bm_shares)}, index = bm_close.loc["2020-10-28":].index)
+bm_hist =  pd.DataFrame({bm_ticker : np.dot(bm_close.loc["2020-10-28":r1date],bm_shares)}, 
+                                index = bm_close.loc["2020-10-28":r1date].index)
+
+# %% PTF & BM %
+
+# Portfolio
+
+ptf_hist = ptf_hist/ptf_hist.loc[sdate]
+
+# Benchmark
+bm_hist =  bm_hist/bm_hist.loc[sdate]
 
 # %% PORTFOLIO AND BENCHMARK HISTORICAL PRICES FROM 2 YEARS AGO
 # Portfolio
