@@ -93,6 +93,7 @@ Sigma = risk_models.sample_cov(adj_return, returns_data=True)
 from pypfopt import CLA, plotting
 
 cla = CLA(mu, Sigma, weight_bounds=(0.03,1))
+
 cla.max_sharpe()
 cla.portfolio_performance(verbose=True)
 
