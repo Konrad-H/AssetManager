@@ -38,7 +38,7 @@ print(bmark.info["shortName"])
 close_data = pd.DataFrame() # Closing Price 
 vol_data = pd.DataFrame()  # Volume
 for i in range(0,N):
-    right = asset_list[i].history(period="2y")
+    right = asset_list[i].history(period="3y")
     right_close = pd.DataFrame({tickers[i]: right['Close']})
     right_vol = pd.DataFrame({tickers[i]: right['Volume']})
     if (close_data.empty):
@@ -50,7 +50,7 @@ for i in range(0,N):
 print("Assets #NaN:\n",close_data.isnull().sum(),"\n") #NaN check
 
 # Benchmark
-bm_close = pd.DataFrame({ bm_ticker : bmark.history(period="2y")['Close']}) # Closing Price
+bm_close = pd.DataFrame({ bm_ticker : bmark.history(period="3y")['Close']}) # Closing Price
 print("Benchmark1 #NaN:\n", bm_close.isnull().sum(),"\n") #NaN check
 
 # %% TODAY
@@ -68,9 +68,9 @@ start_ptf = cash*(1-extraLiquidity)/ USD_EUR_RATE
 
 # %% PORTFOLIO OPTIMIZATION (INFORMATION RATIO)
 #Assets return:
-a_return = close_data.pct_change().dropna(how="all")
+a_return = close_data['2018-10-28':sdate].pct_change().dropna(how="all")
 #Benchmark return: 
-bm_return = bm_close.pct_change().dropna(how="all")
+bm_return = bm_close['2018-10-28':sdate].pct_change().dropna(how="all")
 #Adjusted return:
 adj_return = a_return.subtract(bm_return.to_numpy())
 
@@ -84,7 +84,7 @@ ef = EfficientFrontier(mu, Sigma, weight_bounds=(0.01,1)) #weight bounds in nega
 #ef.add_objective(objective_functions.L2_reg, gamma=1)
 sharpe_pfolio=ef.max_sharpe() #May use add objective to ensure minimum zero weighting to individual stocks
 sharpe_pwt=ef.clean_weights()
-print(sharpe_pwt)
+#print(sharpe_pwt)
 # print(np.array(list(sharpe_pwt.values())).sum()) #Check that weights sum to one
 
 #Print Portfolio Performances
@@ -118,7 +118,6 @@ bm_hist =  pd.DataFrame({bm_ticker : np.dot(bm_close,bm_shares)}, index = bm_clo
 
 # %% PLOT HISTORICAL PRICES
 all_hist = pd.merge(ptf_hist,bm_hist, left_index = True, right_index = True)
-all_hist = pd.merge(all_hist,bm2_hist, left_index = True, right_index = True)
 
 all_hist.plot()
 
@@ -155,12 +154,12 @@ bm_hist =  pd.DataFrame({bm_ticker : np.dot(bm_close.loc["2020-10-28":r1date],bm
 # %% PTF & BM %
 
 # Portfolio
-
-ptf_hist = ptf_hist/ptf_hist.loc[sdate]
+ptf_hist = (ptf_hist/ptf_hist.loc[sdate]-1)*100
 
 # Benchmark
-bm_hist =  bm_hist/bm_hist.loc[sdate]
+bm_hist =  (bm_hist/bm_hist.loc[sdate]-1)*100
 
+#NB: These returns do not take into account the change USD-EUR, see the file excel for them.
 # %% PLOT HISTORICAL PRICES
 all_hist = pd.merge(ptf_hist,bm_hist, left_index = True, right_index = True)
 
